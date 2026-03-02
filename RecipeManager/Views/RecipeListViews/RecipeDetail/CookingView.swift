@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CookingView: View {
     
+    @AppStorage("recipesCompleted") var recipesCompleted: Int = 0
     @Environment(\.presentationMode) var presentationMode
     var steps: [String]
     @State var tabSelection = 0
@@ -69,16 +70,6 @@ struct CookingView: View {
                 .fontDesign(.rounded)
                 .bold()
             }
-            
-//            HStack(spacing: 80) {
-//                backButton
-//                nextButton
-//            }
-//            .frame(height: 60)
-//            .foregroundStyle(.white)
-//            .font(.title2)
-//            .fontDesign(.rounded)
-//            .bold()
         }
         .alert("Stop cooking?\nprogress will be lost", isPresented: $showAlert, actions: {
             HStack {
@@ -107,8 +98,7 @@ struct CookingView: View {
         Button {
             completeButtonPressed()
         } label: {
-            Text(tabSelection == (steps.count-1) ? "Finish recipe!":"Complete step")
-//                .contentTransition(.numericText())
+            Text(tabSelection == (steps.count-1) ? "Finish":"Complete step")
         }
         .buttonStyle(ThirdDimensional())
     }
@@ -117,20 +107,16 @@ struct CookingView: View {
         Button {
             backButtonPressed()
         } label: {
-//            Text("< back")
             Text("<").padding()
         }
-//        .buttonStyle(ThirdDimensional(topLeadingRadius: 25, bottomLeadingRadius: 25))
         .disabled(tabSelection == 0)
     }
     var nextButton: some View {
         Button {
             nextButtonPressed()
         } label: {
-//            Text("Next >")
             Text(">").padding()
         }
-//        .buttonStyle(ThirdDimensional(bottomTrailingRadius: 25, topTrailingRadius: 25))
         .disabled(tabSelection == (steps.count-1))
     }
     
@@ -140,15 +126,12 @@ struct CookingView: View {
     
     func completeButtonPressed() {
         if currentStep == steps.count-1 {
-            // final step completed
+            presentationMode.wrappedValue.dismiss()
+            recipesCompleted += 1
         } else {
-            withAnimation {
-                currentStep += 1
-            }
+            withAnimation { currentStep += 1 }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                withAnimation {
-                    tabSelection += 1
-                }
+                withAnimation { tabSelection += 1 }
             }
         }
     }
@@ -169,4 +152,5 @@ struct CookingView: View {
     VStack {
         CookingView(steps: RecipesMockData.getData()[0].steps)
     }
+    .modelContainer(previewContainer)
 }

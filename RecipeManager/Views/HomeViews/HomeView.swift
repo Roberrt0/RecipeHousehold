@@ -173,5 +173,5 @@ extension HomeView {
     NavigationStack {
         HomeView()
             .background(.BG)
-    }
+    }.modelContainer(previewContainer)
 }

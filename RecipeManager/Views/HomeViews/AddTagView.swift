@@ -9,17 +9,16 @@ import SwiftUI
 
 struct AddTagView: View {
     
-    @ObservedObject var vm: TagsViewModel
+    @Environment(\.modelContext) private var modelContext
     
-    init(vm: TagsViewModel) {
-        self.vm = vm
+    init() {
     }
     
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.colorScheme) var colorScheme
     
     @State var textFieldText: String = ""
-    @State var colorSelected: Color = .blue
+    @State var colorSelected: TagColor = .blue
     
     @State var showAlert: Bool = false
     @State var alertTitle: String = ""
@@ -71,19 +70,19 @@ extension AddTagView {
     
     var colorPalette: some View {
         LazyVGrid(columns: columns, content: {
-            ForEach(vm.colorChoices, id: \.self) { color in
+            ForEach(TagColor.allCases, id: \.self) { color in
                 ZStack {
                     Circle()
-                        .fill(color)
+                        .fill(color.swiftUIColor)
                         .frame(width: 50)
-                        .onTapGesture {
-                            colorPressed(color: color)
-                        }
                         .padding(10)
+                        .onTapGesture {
+                            colorSelected = color
+                        }
                     
                     if color == colorSelected {
                         Circle()
-                            .stroke(color, style: StrokeStyle(lineWidth: 5))
+                            .stroke(color.swiftUIColor, style: StrokeStyle(lineWidth: 5))
                             .frame(width: 60, height: 60)
                     }
                 }
@@ -95,28 +94,30 @@ extension AddTagView {
 // MARK: FUNCTIONS
 extension AddTagView {
     func saveButtonPressed() {
-        if !vm.validateTitle(title: textFieldText) {
+        // validate
+        if !TagsDataService.validateTitle(title: textFieldText) {
             alertTitle = "Invalid text!"
             alertMessage = "your text should at least have 3 characters 🤓"
             showAlert.toggle()
             return
         }
-        vm.add(title: textFieldText, color: colorSelected)
+        
+        // pass to the viewmodel and close popup
+        TagsDataService.add(title: textFieldText, color: colorSelected, context: modelContext)
         presentationMode.wrappedValue.dismiss()
     }
-    
-    func colorPressed(color: Color) {
-        colorSelected = color
-    }
 }
+
+// MARK: Xcode Preview
 
 #Preview {
     NavigationStack {
-        AddTagView(vm: TagsViewModel())
+        AddTagView()
     }
+    .modelContainer(previewContainer)
 }
 
-// for testing
+// used for the preview
 struct AddViewSheetTest: View {
     
     @State private var showSheet: Bool = false
@@ -128,7 +129,7 @@ struct AddViewSheetTest: View {
             showSheet.toggle()
         }
         .sheet(isPresented: $showSheet, content: {
-            AddTagView(vm: TagsViewModel())
+            AddTagView()
                 .presentationDetents([.medium], selection: $detent)
         })
     }

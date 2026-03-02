@@ -19,7 +19,7 @@ struct TagView: View {
         Text(tag.title)
             .padding(.all, 5)
             .font(.body)
-            .background(tag.getColor())
+            .background(tag.color.swiftUIColor)
             .foregroundColor(Color.white)
             .cornerRadius(5)
     }
@@ -27,5 +27,5 @@ struct TagView: View {
 }
 
 #Preview {
-    TagView(tag: TagModel(title: "hey u", colorName: "purple"))
+    TagView(tag: TagModel(title: "Some tag", color: TagColor.blue))
 }

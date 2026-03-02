@@ -19,7 +19,7 @@ enter image description here
 
 struct TagCloudView: View {
     
-    @ObservedObject var tagsViewModel = TagsViewModel()
+    var tags: [TagModel]
 
     @State private var totalHeight
           = CGFloat.zero       // << variant for ScrollView/List
@@ -40,8 +40,8 @@ struct TagCloudView: View {
         var height = CGFloat.zero
 
         return ZStack(alignment: .topLeading) {
-            ForEach(self.tagsViewModel.tags) { tag in
-                self.item(for: tag.title, style: tag.getColor())
+            ForEach(self.tags) { tag in
+                self.item(for: tag.title, style: tag.swiftUIColor)
                     .padding([.horizontal, .vertical], 4)
                     .alignmentGuide(.leading, computeValue: { d in
                         if (abs(width - d.width) > g.size.width)
@@ -50,7 +50,7 @@ struct TagCloudView: View {
                             height -= d.height
                         }
                         let result = width
-                        if tag.title == self.tagsViewModel.tags.last?.title {
+                        if tag == self.tags.last {
                             width = 0 //last item
                         } else {
                             width -= d.width
@@ -59,7 +59,7 @@ struct TagCloudView: View {
                     })
                     .alignmentGuide(.top, computeValue: {d in
                         let result = height
-                        if tag.title == self.tagsViewModel.tags.last?.title {
+                        if tag == self.tags.last {
                             height = 0 // last item
                         }
                         return result
@@ -92,7 +92,7 @@ struct TestTagCloudView : View {
     var body: some View {
         VStack {
             Text("Recipe's Tags").font(.largeTitle)
-            TagCloudView()
+            TagCloudView(tags: TagsMockData.getData())
         }
     }
 }

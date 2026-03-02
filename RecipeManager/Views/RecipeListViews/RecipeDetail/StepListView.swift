@@ -8,22 +8,50 @@
 import SwiftUI
 
 struct StepListView: View {
-    
     let steps: [String]
     
     var body: some View {
-        List {
-            ForEach(steps.indices, id: \.self) { index in
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("step \(index+1)")
-                        .font(.headline)
-                        .foregroundStyle(.yellow)
-                    Text(steps[index])
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                    HStack(alignment: .top, spacing: 20) {
+                        // The Timeline Column
+                        VStack(spacing: 0) {
+                            Text("\(index + 1)")
+                                .font(.caption.bold())
+                                .foregroundStyle(.white)
+                                .frame(width: 28, height: 28)
+                                .background(Circle().fill(.teal))
+                            
+                            // Draw the line connecting steps (except for the last one)
+                            if index != steps.count - 1 {
+                                Rectangle()
+                                    .fill(.teal.opacity(0.3))
+                                    .frame(width: 2)
+                                    .frame(maxHeight: .infinity)
+                            }
+                        }
+                        
+                        // The Instruction Card
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("STEP \(index + 1)")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.secondary)
+                                .tracking(1)
+                            
+                            Text(step)
+                                .font(.body)
+                                .lineSpacing(4)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.bottom, 30) // Creates space for the line
+                    }
                 }
             }
+            .padding()
         }
-        .listStyle(.inset)
         .navigationTitle("Instructions")
+        .background(Color(.systemGroupedBackground), ignoresSafeAreaEdges: .all)
     }
 }
 

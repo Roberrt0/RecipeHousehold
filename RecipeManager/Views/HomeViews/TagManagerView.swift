@@ -6,45 +6,46 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct TagManagerView: View {
     
-    @StateObject var vm: TagsViewModel = TagsViewModel()
-    @State var selectedTag = TagModel(title: "unselected", colorName: "none")
+    @Environment(\.modelContext) private var modelContext
+    @Query var allTags: [TagModel]
+    @State var selectedTag = TagModel(title: "unselected", color: .blue)
     
     @State private var showSheet: Bool = false
     @State private var showAlert: Bool = false
     
     var body: some View {
-        List {
-            ForEach(vm.tags) { tag in
-                TagView(tag: tag)
-                    .swipeActions(allowsFullSwipe: false) {
-                        Button {
-                            selectedTag = tag
-                            showAlert = true
-                        } label: {
-                            Text("Delete")
+        NavigationStack {
+            List {
+                ForEach(allTags) { tag in
+                    TagView(tag: tag)
+                        .swipeActions(allowsFullSwipe: false) {
+                            Button {
+                                selectedTag = tag
+                                showAlert = true
+                            } label: {
+                                Text("Delete")
+                            }
+                            .tint(.red)
                         }
-                        .tint(.red)
-                    }
+                }
+                .alert("Delete \"\(selectedTag.title)\" tag? It will completely disappear in all recipes",
+                       isPresented: $showAlert,
+                       presenting: selectedTag) { tag in
+                    confirmationDeleteButton
+                }
             }
-            .onMove(perform: vm.move)
-            .alert("Delete \"\(selectedTag.title)\" tag? It will completely disappear in all recipes",
-                   isPresented: $showAlert,
-                   presenting: selectedTag) { tag in
-                confirmationDeleteButton
+            .navigationTitle("Recipe tags")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) { addButton }
+            }
+            .sheet(isPresented: $showSheet) {
+                AddTagView().presentationDetents([.medium, .large])
             }
         }
-        .navigationTitle("Your Tags")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) { addButton }
-            ToolbarItem(placement: .topBarTrailing) { EditButton() }
-        }
-        .sheet(isPresented: $showSheet) {
-            AddTagView(vm: self.vm).presentationDetents([.medium, .large])
-        }
-
     }
     
     var addButton: some View {
@@ -58,7 +59,7 @@ struct TagManagerView: View {
     var confirmationDeleteButton: some View {
         Button("delete", role: .destructive) {
             withAnimation {
-                vm.delete(selectedTag)
+                TagsDataService.delete(selectedTag, context: modelContext)
             }
         }
     }
@@ -68,7 +69,6 @@ struct TagManagerView: View {
 }
 
 #Preview {
-    NavigationStack {
-        TagManagerView()
-    }
+    TagManagerView()
+        .modelContainer(previewContainer)
 }

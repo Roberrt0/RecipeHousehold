@@ -6,43 +6,40 @@
 //
 
 import Foundation
+import SwiftData
+import SwiftUI
 
-struct RecipeModel: Identifiable, Hashable, Equatable {
-    static func == (lhs: RecipeModel, rhs: RecipeModel) -> Bool {
-        return lhs.id == rhs.id
-    }
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-    
-    var id: String
+@Model
+final class RecipeModel {
+    @Attribute(.unique) var id: String
     var name: String
-    var ingredients: [IngredientModel]
+    var ingredients: [String] // Simplified to String array
     var steps: [String]
-    var tags: [TagModel]
     var notes: String
-    var imageName: String
-    var timeToPrep: Int?
+    var timeToPrep: TimeInterval?
     
+    // Establishing a Many-to-Many relationship with TagModel
+    @Relationship(inverse: \TagModel.recipes)
+    var tags: [TagModel] = []
+
     init(id: String = UUID().uuidString,
          name: String = "",
-         ingredients: [IngredientModel] = [],
+         ingredients: [String] = [],
          steps: [String] = [],
          tags: [TagModel] = [],
-         notes: String = "", 
-         imageName: String = "",
-         timeToPrep: Int? = nil) {
+         notes: String = "",
+         timeToPrep: TimeInterval? = nil) {
         self.id = id
         self.name = name
         self.ingredients = ingredients
         self.steps = steps
         self.tags = tags
         self.notes = notes
-        self.imageName = imageName
         self.timeToPrep = timeToPrep
     }
 }
 
+// MARK: Mock data provider class
 
 struct RecipesMockData {
     static func getData() -> [RecipeModel] {
@@ -53,18 +50,18 @@ struct RecipesMockData {
             "To make the marmalade, halve 1kg Seville oranges and squeeze the juice into a large pan (it can help to do this through a sieve to catch any pips). Scoop out the remaining flesh and pips from the orange halves on to a muslin cloth (along with any pips caught in the sieve) and tie with string to make a bag, then set aside. You should now be left with just the orange peel. Cut into thin strips and add to the pan of orange juice along with the juice of 1 lemon.",
             "After the 2 hrs, remove the muslin bag and put in a small bowl. When cool, squeeze out all liquid from the bag back into the pan, along with any juices that have collected in the bowl. Add 2kg golden granulated sugar to the pan and simmer over a very low heat, stirring occasionally, for 15 mins, or until the sugar has dissolved."
         ]
-        let ingredients: [IngredientModel] = IngredientsMockData.getData()
+        let ingredients: [String] = ["200 gm of sugar", "cookie dough", "chocolate chips", "almonds"]
         let tags: [TagModel] = TagsMockData.getData()
         let notes: String = "These are the notes of the user that are supposed to mention something whatever the user desires to place here will be shown in this whole paragraph but right now im just writing a placeholder to visualize it in my preview i love swiftui."
         
         let data: [RecipeModel] = [
-            .init(name: "delicious cookies", ingredients: ingredients, steps: steps, tags: tags, notes: notes, imageName: "testingImage", timeToPrep: 150),
-            .init(name: "rissota lemon pie", ingredients: ingredients, steps: steps, tags: tags, notes: notes, imageName: "testingImage", timeToPrep: 150),
-            .init(name: "Apple pie", ingredients: ingredients, steps: steps, tags: tags, notes: notes, imageName: "testingImage", timeToPrep: 150),
-            .init(name: "Strawberry flavored cake", ingredients: ingredients, steps: steps, tags: tags, notes: notes, imageName: "testingImage", timeToPrep: 150),
-            .init(name: "My favorite recipe", ingredients: ingredients, steps: steps, tags: tags, notes: notes, imageName: "testingImage", timeToPrep: 150),
-            .init(name: "Thanksgiving smoked turkey", ingredients: ingredients, steps: steps, tags: tags, notes: notes, imageName: "testingImage", timeToPrep: 150),
-            .init(name: "Christmas cookies", ingredients: ingredients, steps: steps, tags: tags, notes: notes, imageName: "testingImage", timeToPrep: 150)
+            .init(name: "delicious cookies", ingredients: ingredients, steps: steps, tags: tags, notes: notes, timeToPrep: 3940),
+            .init(name: "rissota lemon pie", ingredients: ingredients, steps: steps, tags: tags, notes: notes, timeToPrep: 3940),
+            .init(name: "Apple pie", ingredients: ingredients, steps: steps, tags: tags, notes: notes, timeToPrep: 150),
+            .init(name: "Strawberry flavored cake", ingredients: ingredients, steps: steps, tags: tags, notes: notes, timeToPrep: 3940),
+            .init(name: "My favorite recipe", ingredients: ingredients, steps: steps, tags: tags, notes: notes, timeToPrep: 3940),
+            .init(name: "Thanksgiving smoked turkey", ingredients: ingredients, steps: steps, tags: tags, notes: notes, timeToPrep: 3940),
+            .init(name: "Christmas cookies", ingredients: ingredients, steps: steps, tags: tags, notes: notes, timeToPrep: 3940)
         ]
         
         return data

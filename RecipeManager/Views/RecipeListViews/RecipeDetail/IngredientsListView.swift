@@ -9,50 +9,46 @@ import Foundation
 import SwiftUI
 
 struct IngredientsListView: View {
-    
-    @State var ingredientList: [IngredientModel] = [
-        .init(name: "5 cups of something"),
-        .init(name: "2 spoons of sugar"),
-        .init(name: "some oranges"),
-        .init(name: "3 eggs"),
-        .init(name: "a carton of milk"),
-        .init(name: "5 strawberries"),
-        .init(name: "mermelade")
-    ]
+    let ingredientList: [String]
     
     var body: some View {
-        List {
-            ForEach(ingredientList) { ingredient in
-                HStack {
-                    Image(systemName: ingredient.isAvailable ? "checkmark.square.fill" : "square")
-                        .foregroundStyle(.yellow)
-                    Text(ingredient.name)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                ForEach(ingredientList, id: \.self) { ingredient in
+                    HStack(spacing: 15) {
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 8))
+                            .foregroundStyle(.teal)
+                        
+                        Text(ingredient)
+                            .font(.body)
+                            .foregroundStyle(.primary)
+                        
+                        Spacer()
+                    }
+                    .padding()
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
                 }
-                .onTapGesture { updateIngredient(ingredient) }
             }
-            .onMove(perform: { indices, newOffset in
-                ingredientList.move(fromOffsets: indices, toOffset: newOffset)
-            })
+            .padding()
         }
-        .navigationTitle("Ingredient List")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                EditButton()
-            }
-        }
-        
+        .navigationTitle("Ingredients")
+        .background(Color(.systemGroupedBackground))
     }
-    
-    func updateIngredient(_ ingredient: IngredientModel) {
-        if let index = ingredientList.firstIndex(where: {$0.id == ingredient.id}) {
-            ingredientList[index] = ingredient.updateIngredient()
-        }
-    }
-    
 }
 
 #Preview {
     NavigationStack {
-        IngredientsListView()
+        IngredientsListView(ingredientList: [
+            "5 cups of something",
+            "2 spoons of sugar",
+            "some oranges",
+            "3 eggs",
+            "a carton of milk",
+            "5 strawberries",
+            "mermelade"
+        ])
     }
 }

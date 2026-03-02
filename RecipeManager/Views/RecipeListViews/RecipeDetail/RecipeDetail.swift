@@ -1,154 +1,135 @@
 //
-//  RecipeDetail.swift
+//  RecipeDetail2.swift
 //  RecipeManager
 //
-//  Created by Luis Roberto Martinez on 03/09/24.
+//  Created by Luis Roberto Martinez on 01/03/26.
 //
 
 import SwiftUI
 
-// use link as recipe item vs use recipe as additional property
-// use link as recipe item is probably better
-
 struct RecipeDetail: View {
-    
     var recipe: RecipeModel
-    var tags: [String] = [
-        "High calories", "High in sugars", "Vegan", "Glutten free", "Small portions", "another tag"
-    ]
-    @Environment(\.presentationMode) var presentationmode
+    @Environment(\.dismiss) private var dismiss
     
-    init(recipe: RecipeModel) {
-        self.recipe = recipe
+    var formattedPrepTime: String? {
+        guard let prepTime = recipe.timeToPrep else { return nil }
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: prepTime)
     }
     
     var body: some View {
-        ScrollView {
-            Image("testingImage")
-                .resizable()
-                .scaledToFill()
-                .overlay(alignment: .bottomLeading) {
-                    VStack(alignment: .leading) {
-                        Button {
-                            presentationmode.wrappedValue.dismiss()
-                        } label: {
-                            HStack {
-                                Image(systemName: "chevron.left.circle.fill")
-                                    .bold()
-                                    .font(.largeTitle)
-//                                Text("back")
-                            }
-//                            .padding(10)
-//                            .background()
-//                            .clipShape(RoundedRectangle(cornerRadius: 25.0))
-//                            .clipShape(Circle())
-                        }
-                        .padding(.top, 50)
-                        
-                        Spacer()
-                        
-                        HStack(alignment: .bottom) {
-                            Text("Almond chocolate cake")
-                                .foregroundStyle(.white)
-                                .font(.title)
-                                .bold()
-                                .shadow(radius: 5)
-                            
-                            Spacer()
-                            
-                            Image(systemName: "heart")
-                                .foregroundStyle(.pink)
-                                .font(.title)
-                        }
-                    }
-                    .padding()
+        VStack(spacing: 0) {
+            // 1. REFINED COMPACT HEADER
+            HStack(spacing: 15) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.title3.bold())
+                        .foregroundStyle(.white)
+                        .padding(10)
+                        .background(.white.opacity(0.2))
+                        .clipShape(Circle())
                 }
-                .frame(height: 350)
-            
-            VStack(alignment: .leading, spacing: 30) {
                 
-                tagsSection
-                
-                threeStats
-                
-                Divider()
-                
-                someButtons
-                
-                Divider()
-                
-                notesSection
+                Text(recipe.name)
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
                 
                 Spacer()
             }
             .padding(.horizontal)
-            .padding(.top, 5)
+            .padding(.bottom, 15)
+            .padding(.top, 60) // Increase slightly for iPhone 15/16 Pro notches
+            .background {
+                // APPLY THE GRADIENT HERE
+                LinearGradient(
+                    colors: [.teal, Color(red: 0.1, green: 0.6, blue: 0.7)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea(edges: .top) // THIS is the critical line
+            }
+            .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 25, bottomTrailingRadius: 25))
+
+            // 2. SCROLLVIEW CONTENT
+            ScrollView {
+                VStack(alignment: .leading, spacing: 30) {
+                    // TAGS SECTION
+                    if !recipe.tags.isEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Tags")
+                                .font(.headline)
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 5)
+                            TagCloudView(tags: recipe.tags)
+                        }
+                        .padding(.top, 20)
+                    }
+                    
+                    threeStats
+                    
+                    Divider()
+                    
+                    someButtons
+                    
+                    Divider()
+                    
+                    if !recipe.notes.isEmpty {
+                        notesSection
+                    }
+                    
+                    Spacer(minLength: 50)
+                }
+                .padding(.horizontal)
+                .padding(.top)
+            }
         }
-        .ignoresSafeArea(edges: .top)
-        .navigationBarBackButtonHidden() // use only when using a custom back button
+        .navigationBarBackButtonHidden()
+        .background(Color(.systemGroupedBackground))
+        .ignoresSafeArea(edges: .top) // Also add here to ensure the VStack can bleed up
     }
-    
-    var tagsSection: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text("Tags")
-                .font(.headline)
-                .fontWeight(.semibold)
-                .padding(.leading, 10)
-            TagCloudView()
-        }
-    }
+
     
     var threeStats: some View {
         HStack {
-            VStack(spacing: 5) {
-                Text("Prep time").frame(width: 100)
-                Text("1hr 32m").font(.title3).bold()
-            }
-            
+            statItem(label: "Prep time", value: formattedPrepTime ?? "--")
             Spacer()
-            
-            VStack(spacing: 5) {
-                Text("Ingredients").frame(width: 100)
-                Text("34").font(.title3).bold()
-            }
-            
+            statItem(label: "Ingredients", value: "\(recipe.ingredients.count)")
             Spacer()
-            
-            VStack(spacing: 5) {
-                Text("Steps").frame(width: 100)
-                Text("12").font(.title3).bold()
-            }
+            statItem(label: "Steps", value: "\(recipe.steps.count)")
         }
     }
     
+    private func statItem(label: String, value: String) -> some View {
+        VStack(spacing: 8) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+            Text(value)
+                .font(.title3)
+                .bold()
+        }
+        .frame(maxWidth: .infinity)
+    }
+    
     var someButtons: some View {
-        VStack(spacing: 10) {
-            
-            NavigationLink(destination: IngredientsListView()) {
-                HStack {
-                    Text("Check the ingredients list")
-                    Spacer()
-                    Image(systemName: "arrow.right").bold()
-                }
-                .foregroundStyle(.white)
-                .padding()
-                .background(.teal)
-                .clipShape(RoundedRectangle(cornerRadius: 10.0))
+        VStack(spacing: 12) {
+            // Check Ingredients
+            NavigationLink(destination: IngredientsListView(ingredientList: recipe.ingredients)) {
+                buttonContent(title: "Check ingredients list", icon: "basket.fill", color: .teal)
             }
             
+            // Review Instructions
             NavigationLink(destination: StepListView(steps: recipe.steps)) {
-                HStack {
-                    Text("Review the instructions")
-                    Spacer()
-                    Image(systemName: "arrow.right").bold()
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(.teal)
-                .clipShape(RoundedRectangle(cornerRadius: 10.0))
+                buttonContent(title: "Review instructions", icon: "list.bullet.clipboard.fill", color: .teal)
             }
             
+            // Start Cooking
             NavigationLink(destination: CookingView(steps: recipe.steps)) {
                 HStack {
                     Text("Start cooking!")
@@ -157,69 +138,47 @@ struct RecipeDetail: View {
                 .foregroundStyle(.white)
                 .font(.headline)
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(LinearGradient(colors: [.yellow, .orange], startPoint: .topLeading, endPoint: .trailing))
-                .clipShape(RoundedRectangle(cornerRadius: 25.0))
-                .padding(.horizontal, 20)
+                .padding(.vertical, 18)
+                .background(LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing))
+                .clipShape(Capsule())
+                .shadow(color: .orange.opacity(0.3), radius: 10, y: 5)
                 .padding(.top, 10)
             }
-            
         }
-        .padding(.horizontal)
-        .frame(maxWidth: .infinity)
+    }
+    
+    private func buttonContent(title: String, icon: String, color: Color) -> some View {
+        HStack {
+            Label(title, systemImage: icon)
+            Spacer()
+            Image(systemName: "chevron.right").font(.caption).bold()
+        }
+        .foregroundStyle(.white)
+        .padding()
+        .background(color)
+        .clipShape(RoundedRectangle(cornerRadius: 15))
     }
     
     var notesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Your notes")
-                .font(.title)
-                .fontWeight(.semibold)
-            Text("These are the notes of the user that are supposed to mention something whatever the user desires to place here will be shown in this whole paragraph but right now im just writing a placeholder to visualize it in my preview i love swiftui.")
+                .font(.title2)
+                .bold()
+            Text(recipe.notes)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .lineSpacing(4)
         }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 15))
     }
 }
+
 
 #Preview {
     NavigationStack {
         RecipeDetail(recipe: RecipesMockData.getData()[0])
     }
+    .modelContainer(previewContainer)
 }
-
-
-
-
-
-// overlay withour back button
-
-//Text("Almond chocolate cake")
-//    .foregroundStyle(.white)
-//    .font(.largeTitle)
-//    .bold()
-//    .shadow(radius: 5)
-//    .padding()
-
-
-// overlay with back button
-
-//VStack(alignment: .leading) {
-//    Button {
-//        presentationmode.wrappedValue.dismiss()
-//    } label: {
-//        HStack {
-//            Image(systemName: "chevron.backward").bold()
-//            Text("back")
-//        }
-//        .padding(10)
-//        .background()
-//        .clipShape(RoundedRectangle(cornerRadius: 25.0))
-//    }
-//    
-//    Spacer()
-//    
-//    Text("Almond chocolate cake")
-//        .foregroundStyle(.white)
-//        .font(.largeTitle)
-//        .bold()
-//        .shadow(radius: 5)
-//}
-//.padding()

@@ -11,25 +11,25 @@ struct MainView: View {
     
     var body: some View {
         TabView {
-                RecipeListView()
-                    .tabItem {
-                        Label("recipes", systemImage: "books.vertical")
-                    }
-                
-                HomeView()
-                    .tabItem {
-                        Label("home", systemImage: "house.fill")
-                    }
-                
-                ProfileView()
-                    .tabItem {
-                        Label("profile", systemImage: "person")
-                    }
+            RecipeListView()
+                .tabItem {
+                    Label("recipes", systemImage: "books.vertical")
+                }
+            
+            TagManagerView()
+                .tabItem {
+                    Label("tags", systemImage: "tag")
+                }
+            
+            ProfileView()
+                .tabItem {
+                    Label("profile", systemImage: "person")
+                }
         }
     }
-    
 }
 
 #Preview {
    MainView()
+        .modelContainer(previewContainer)
 }

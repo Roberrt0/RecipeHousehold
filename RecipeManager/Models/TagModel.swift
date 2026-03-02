@@ -5,49 +5,59 @@
 //  Created by Luis Roberto Martinez on 14/09/24.
 //
 
+import Foundation
 import SwiftUI
+import SwiftData
 
-struct TagModel: Identifiable, Equatable {
-    let id: String
-    let title: String
-    let colorName: String
-    let isSelected: Bool = false
+@Model
+final class TagModel {
+    @Attribute(.unique) var id: String
+    var title: String
+    var color: TagColor
+    var isSelected: Bool = false
     
-    init(id: String = UUID().uuidString, title: String, colorName: String) {
+    // Reference back to the recipes using this tag
+    var recipes: [RecipeModel] = []
+
+    init(id: String = UUID().uuidString, title: String, color: TagColor) {
         self.id = id
         self.title = title
-        self.colorName = colorName
+        self.color = color
     }
     
-    func getColor() -> Color {
-        switch colorName {
-        case "blue": return Color.blue
-        case "green": return Color.green
-        case "yellow": return Color.yellow
-        case "red": return Color.red
-        case "purple": return Color.purple
-        case "mint": return Color.mint
-        case "indigo": return Color.indigo
-        case "orange": return Color.indigo
-        default: return Color.black
-        }
-    }
-    
-    static func ==(lhs: Self, rhs: Self) -> Bool {
-        return lhs.id == rhs.id
+    // Computed property for UI usage (Not stored in DB)
+    @Transient
+    var swiftUIColor: Color {
+        return color.swiftUIColor
     }
 }
 
+enum TagColor: String, Codable, CaseIterable {
+    case blue, green, yellow, red, purple, mint, indigo, orange
+    
+    var swiftUIColor: Color {
+        switch self {
+            case .blue: return .blue
+            case .green: return .green
+            case .yellow: return .yellow
+            case .red: return .red
+            case .purple: return .purple
+            case .mint: return .mint
+            case .indigo: return .indigo
+            case .orange: return .orange
+        }
+    }
+}
 
 struct TagsMockData {
     static func getData() -> [TagModel] {
         let data: [TagModel] = [
-            .init(title: "High in calories", colorName: "red"),
-            .init(title: "Sweeties", colorName: "red"),
-            .init(title: "Gluten free", colorName: "blue"),
-            .init(title: "5 Servings", colorName: "purple"),
-            .init(title: "Delicious", colorName: "mint"),
-            .init(title: "Healthy", colorName: "green")
+            .init(title: "High in calories", color: TagColor.red),
+            .init(title: "Sweeties", color: TagColor.red),
+            .init(title: "Gluten free", color: TagColor.blue),
+            .init(title: "5 Servings", color: TagColor.purple),
+            .init(title: "Delicious", color: TagColor.mint),
+            .init(title: "Healthy", color: TagColor.green)
         ]
         return data
     }

@@ -12,101 +12,118 @@
 
 import SwiftUI
 import Combine
-
-
+import SwiftData
 
 class UpdateRecipeViewModel: ObservableObject {
+    var recipeTags: [TagModel] = [] // Temporary storage
     
-    typealias TagBoolTuple = [(tag: TagModel, hasTag: Bool)]
+    // form values to save
+    @Published var recipeId: String
+    @Published var name: String = ""
+    @Published var ingredientList: [SafeBindItem] = []
+    @Published var stepList: [SafeBindItem] = []
+    @Published var allTagsTracker: [TagSelection] = []
+    @Published var notes: String = ""
+    @Published var prepHours: Int = 0
+    @Published var prepMinutes: Int = 0
     
-    // recipe to update
-    @Published var recipe: RecipeModel
-    @Published var allTagsTracker: TagBoolTuple
-    @Published var stepList: [StepModel]
+    private let recipesService = RecipesDataService()
+    private let tagsService = TagsDataService()
     
-    let recipeManager = RecipesDataService.shared
-    let tagsManager = GlobalTagsManager.shared
-    var cancellables = Set<AnyCancellable>()
-    
-    init(recipe: RecipeModel) {
-        self.recipe = recipe
-        self.stepList = recipe.steps.map({ description in
-                .init(text: description)
+    init(recipe: RecipeModel, allAvailableTags: [TagModel]) {
+        self.recipeId = recipe.id
+        self.name = recipe.name
+        self.notes = recipe.notes
+        self.recipeTags = recipe.tags
+        self.ingredientList = recipe.ingredients.map({ ingredient in
+            SafeBindItem(name: ingredient)
         })
-        allTagsTracker = [] // placed this here to avoid the error
-        addTagsSubscriber()
+        self.stepList = recipe.steps.map({ step in
+            SafeBindItem(name: step)
+        })
+        if let prepTime = recipe.timeToPrep {
+            let totalMinutes = Int(prepTime / 60)
+            self.prepHours = totalMinutes / 60
+            self.prepMinutes = totalMinutes % 60
+        }
+        self.fillTagsInformation(recipeTags: recipe.tags, allAvailableTags: allAvailableTags)
     }
     
-    func saveRecipe() {
-        var newRecipe = recipe
-        newRecipe.steps = stepList.map { item in
-            item.text
+    func fillTagsInformation(recipeTags: [TagModel], allAvailableTags: [TagModel]) {
+        guard !allAvailableTags.isEmpty else { return }
+        self.allTagsTracker = allAvailableTags.map { tag in
+            TagSelection(tag: tag, isIncluded: recipeTags.contains(where: { $0.id == tag.id }))
         }
-        newRecipe.tags = allTagsTracker.map { item in
-            item.tag
-        }
-        recipeManager.add(recipe: newRecipe)
     }
     
-    // gets global tags from manager
-    func addTagsSubscriber() { /*
-//        let globalTags = tagsManager.tags
-//        var tagList: TagBoolTuple = []
-//        for tag in globalTags {
-//            let item = (tag, false)
-//            tagList.append(item)
-//        }
-//        allTagsTracker = tagList
-        */
-        tagsManager.$tags.sink { completion in
-            switch completion {
-            case .finished:
-                print("Success fetching global tags")
-            case .failure(let error):
-                print("Error fetching global tags. \(error.localizedDescription)")
-            
-            }
-        } receiveValue: { returnedTags in
-            self.allTagsTracker = returnedTags.map({ tag in
-                return (tag: tag, hasTag: self.recipe.tags.contains(where: {$0 == tag}))
-            })
-        }
-        .store(in: &cancellables)
+    func saveRecipe(context: ModelContext) {
+        // Calculate time
+        let totalSeconds = TimeInterval((prepHours * 3600) + (prepMinutes * 60))
+        
+        // Map bindings back to strings
+        let ingredients = ingredientList.map { $0.name }.filter { !$0.isEmpty }
+        let steps = stepList.map { $0.name }.filter { !$0.isEmpty }
+        
+        // Get selected tags
+        let selectedTags = allTagsTracker.filter { $0.isIncluded }.map { $0.tag }
+        
+        // Create the model
+        let updatedRecipe = RecipeModel(
+            id: recipeId,
+            name: name,
+            ingredients: ingredients,
+            steps: steps,
+            tags: selectedTags,
+            notes: notes,
+            timeToPrep: totalSeconds
+        )
+        
+        // Upsert into SwiftData
+        context.insert(updatedRecipe)
+        
+        // Ping Flask server here!
+        // Metrics.log(event: "recipe_updated", metadata: ["id": recipeId])
     }
     
     // adds an empty ingredient
     func addNewIngredient() {
-        let newIngredient = IngredientModel(name: "")
-        recipe.ingredients.append(newIngredient)
+        ingredientList.append(SafeBindItem(name: ""))
     }
     
     func deleteIngredient(offsets: IndexSet) {
-        recipe.ingredients.remove(atOffsets: offsets)
+        ingredientList.remove(atOffsets: offsets)
     }
     
     func addNewStep() {
-        let newStep = StepModel(text: "")
-        stepList.append(newStep)
+        stepList.append(SafeBindItem(name: ""))
     }
     
     func deleteStep(offsets: IndexSet) {
         stepList.remove(atOffsets: offsets)
+    }
+    
+    // for binding inside a list
+    struct SafeBindItem: Identifiable, Hashable {
+        let id = UUID()
+        var name: String
     }
 }
 
 struct UpdateRecipeView: View {
     
     @StateObject var vm: UpdateRecipeViewModel
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Query var allTags: [TagModel] // Fetch all tags to show in the picker
     
     init(recipe: RecipeModel = RecipeModel()) {
-        let wrappedValue = UpdateRecipeViewModel(recipe: recipe)
-        _vm = StateObject(wrappedValue: wrappedValue)
+        _vm = StateObject(wrappedValue: UpdateRecipeViewModel(recipe: recipe, allAvailableTags: []))
     }
     
     var body: some View {
         Form {
             Section {
-                TextField("type the name of the recipe", text: $vm.recipe.name)
+                TextField("type the name of the recipe", text: $vm.name)
             } header: {
                 Text("RECIPE NAME*")
             }
@@ -117,18 +134,27 @@ struct UpdateRecipeView: View {
             
             instructionsSection
             
+            timeSection
+            
             tagsSection
-
         }
         .navigationTitle("New Recipe ✏️")
-        .safeAreaInset(edge: .bottom) {
-            saveButton
+        .onAppear {
+            vm.fillTagsInformation(recipeTags: vm.recipeTags, allAvailableTags: allTags)
+        }
+        .toolbar {
+            Button("Save") {
+                Task { @MainActor in
+                    vm.saveRecipe(context: modelContext)
+                    dismiss()
+                }
+            }
         }
     }
     
     var notesSection: some View {
         Section {
-            TextField("type something", text: $vm.recipe.notes, axis: .vertical)
+            TextField("type something", text: $vm.notes, axis: .vertical)
                 .lineLimit(3...8)
         } header: {
             Text("YOUR NOTES")
@@ -139,20 +165,19 @@ struct UpdateRecipeView: View {
     
     var ingredientsSection: some View {
         Section {
-            List {
-                ForEach($vm.recipe.ingredients) { $ingredient in
-                    HStack {
-                        TextField("type an ingredient", text: $ingredient.name)
-                        Image(systemName: "pencil").foregroundStyle(.secondary)
-                    }
+            ForEach($vm.ingredientList) { $ingredient in
+                HStack {
+                    TextField("type an ingredient", text: $ingredient.name)
+                    Image(systemName: "pencil")
+                        .foregroundStyle(.secondary)
                 }
-                .onDelete(perform: vm.deleteIngredient)
-                
-                Button {
-                    vm.addNewIngredient()
-                } label: {
-                    Label( "Add ingredient", systemImage: "plus")
-                }
+            }
+            .onDelete(perform: vm.deleteIngredient)
+
+            Button {
+                vm.addNewIngredient()
+            } label: {
+                Label("Add ingredient", systemImage: "plus")
             }
         } header: {
             Text("Ingredients")
@@ -163,56 +188,57 @@ struct UpdateRecipeView: View {
     
     var instructionsSection: some View {
         Section {
-            List {
-                ForEach($vm.stepList) { $step in
-                    HStack {
-                        TextField("type a step", text: $step.text)
-                        Image(systemName: "pencil").foregroundStyle(.secondary)
-                    }
+            ForEach($vm.stepList) { $step in
+                HStack {
+                    TextField("type a step", text: $step.name)
+                    Image(systemName: "pencil")
+                        .foregroundStyle(.secondary)
                 }
-                .onDelete(perform: vm.deleteStep)
-                
-                Button {
-                    vm.addNewStep()
-                } label: {
-                    Label( "Add step", systemImage: "plus")
-                }
+            }
+            .onDelete(perform: vm.deleteStep)
+
+            Button {
+                vm.addNewStep()
+            } label: {
+                Label("Add step", systemImage: "plus")
             }
         } header: {
             Text("INSTRUCTIONS*")
         }
     }
     
+    var timeSection: some View {
+        Section {
+            HStack {
+                Picker("Hours", selection: $vm.prepHours) {
+                    ForEach(0..<13) {
+                        Text("\($0) h").tag($0)
+                    }
+                }
+                .pickerStyle(.menu)
+
+                Picker("Minutes", selection: $vm.prepMinutes) {
+                    ForEach(Array(stride(from: 0, through: 55, by: 5)), id: \.self) {
+                        Text("\($0) min").tag($0)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+        } header: {
+            Text("PREP TIME")
+        }
+    }
+    
     var tagsSection: some View {
         Section {
-            List {
-                ForEach($vm.allTagsTracker, id: \.tag.id) { $item in
-
-                    Toggle(isOn: $item.hasTag) {
-                        TagView(tag: item.tag)
-                    }
-                    
+            ForEach($vm.allTagsTracker) { $item in
+                Toggle(isOn: $item.isIncluded) {
+                    TagView(tag: item.tag)
                 }
             }
         } header: {
             Text("TAGS")
         }
-    }
-    
-    var saveButton: some View {
-        Button {
-            var savedRecipe = vm.recipe
-            
-            print("RESULT:\n\(savedRecipe)")
-        } label: {
-            Text("SAVE")
-//                Label("create", systemImage: "plus")
-                .font(.headline)
-                .foregroundStyle(.white)
-        }
-        .buttonStyle(ThirdDimensional())
-        .frame(/*maxWidth: 200, */maxHeight: 60)
-        .padding(.horizontal, 40)
     }
 }
 
@@ -220,134 +246,5 @@ struct UpdateRecipeView: View {
     NavigationStack {
         UpdateRecipeView()
     }
+    .modelContainer(previewContainer)
 }
-
-
-//class UpdateRecipeViewModel: ObservableObject {
-//    
-//    // recipe to update
-//    @Published var recipe: RecipeModel
-//    
-//    let tagsManager = GlobalTagsManager.shared
-//    
-//    // temporary variables
-//    @Published var name: String
-//    @Published var ingredientStrings: [String]
-//    @Published var steps: [String]
-//    @Published var tags: [TagModel]
-//    @Published var notes: String
-//    @Published var imageName: String
-//    @Published var timeToPrep: Int?
-//    
-//    init(recipe: RecipeModel = RecipesMockData.getData()[0]) {
-//        self.recipe = recipe
-//        self.name = recipe.name
-//        self.ingredientStrings = recipe.ingredients.map { $0.name }
-//        self.steps = recipe.steps
-//        self.tags = recipe.tags
-//        self.notes = recipe.notes
-//        self.imageName = recipe.imageName
-//        self.timeToPrep = recipe.timeToPrep
-//    }
-//    
-//    func setUpTags(from: [TagModel]) {
-//        let globalTags = tagsManager.tags
-//        for tag in globalTags {
-//            
-//        }
-//    }
-//    
-//}
-//
-//struct UpdateRecipeView: View {
-//    
-//    @StateObject var vm = UpdateRecipeViewModel()
-//    
-//    var body: some View {
-//        Form {
-//            Section {
-//                TextField("type the name of the recipe", text: $vm.name)
-//            } header: {
-//                Text("RECIPE NAME")
-//            }
-//            
-//            Section {
-//                TextField("type something", text: $vm.notes, axis: .vertical)
-//                    .lineLimit(3...8)
-//            } header: {
-//                Text("YOUR NOTES")
-//            } footer: {
-//                Text("TIP - write special things that you would like to remember about this recipe")
-//            }
-//            
-//            ingredientsSection
-//            
-//            instructionsSection
-//            
-//            tagsSection
-//
-//        }
-//        .navigationTitle("New Recipe ✏️")
-//    }
-//    
-//    var ingredientsSection: some View {
-//        Section {
-//            List {
-//                ForEach($vm.ingredientStrings, id: \.self) { $ingredient in
-//                    HStack {
-//                        TextField("type an ingredient", text: $ingredient)
-//                        Image(systemName: "pencil").foregroundStyle(.secondary)
-//                    }
-//                }
-//                
-//                Button {
-//                    vm.ingredientStrings.append("")
-//                } label: {
-//                    Label( "Add another ingredient", systemImage: "plus")
-//                }
-//            }
-//        } header: {
-//            Text("Ingredients")
-//        }
-//    }
-//    
-//    var instructionsSection: some View {
-//        Section {
-//            Text("heheh")
-//        } header: {
-//            Text("Instructions")
-//        }
-//    }
-//    
-//    var tagsSection: some View {
-//        Section {
-//            List {
-//                ForEach(vm.recipe.tags) { tag in
-//
-//                    // for each global tags duh
-//                    // either find a way to implement native functions
-//                    // or just make a custom add/remove and make tagsPropety a set
-//                    
-//                }
-//            }
-//        } header: {
-//            Text("TAGS")
-//        }
-//    }
-//}
-//
-//#Preview {
-//    NavigationStack {
-//        UpdateRecipeView()
-//    }
-//}
-
-
-//        let globalTags = tagsManager.tags
-//        var tagList: TagBoolTuple = []
-//        for tag in globalTags {
-//            let item = (tag, false)
-//            tagList.append(item)
-//        }
-//        allTagsTracker = tagList
-        
