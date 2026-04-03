@@ -17,7 +17,7 @@ struct RecipeManagerApp: App {
                RecipeModel.self,
                TagModel.self,
            ])
-           let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+           let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
            do {
                return try ModelContainer(for: schema, configurations: [modelConfiguration])
@@ -100,6 +100,22 @@ let previewContainer: ModelContainer = {
             timeToPrep: 3600) // 60 mins (includes dough rise)
         container.mainContext.insert(margheritaPizza)
 
+        
+        return container
+    } catch {
+        fatalError("Failed to create preview container")
+    }
+}()
+
+@MainActor
+let previewContainer2: ModelContainer = {
+    let schema = Schema([RecipeModel.self, TagModel.self])
+    
+    // Persistance is disabled for this container
+    let config = ModelConfiguration(isStoredInMemoryOnly: false)
+    
+    do {
+        let container = try ModelContainer(for: schema, configurations: [config])
         
         return container
     } catch {

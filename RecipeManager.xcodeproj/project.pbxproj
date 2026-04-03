@@ -13,6 +13,7 @@
 		620EE5922C9659A8005787AF /* TagsDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620EE5912C9659A8005787AF /* TagsDataService.swift */; };
 		62168B5E2C9A254900AB43B0 /* TagManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62168B5D2C9A254900AB43B0 /* TagManagerView.swift */; };
 		62168C5A2C9D005100A29FAC /* CookingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62168C592C9D005100A29FAC /* CookingView.swift */; };
+		621E02B52F7B881800ABA60E /* MetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 621E02B42F7B880D00ABA60E /* MetricsService.swift */; };
 		623B05E52F381E2C009A713D /* TagSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 623B05E42F381E2C009A713D /* TagSelection.swift */; };
 		623BA08A2C95063800245AB7 /* UpdateRecipeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 623BA0892C95063800245AB7 /* UpdateRecipeView.swift */; };
 		623C5E192C87D8CB00E43C71 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 623C5E182C87D8CB00E43C71 /* HomeView.swift */; };
@@ -64,6 +65,8 @@
 		620EE5912C9659A8005787AF /* TagsDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagsDataService.swift; sourceTree = "<group>"; };
 		62168B5D2C9A254900AB43B0 /* TagManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagManagerView.swift; sourceTree = "<group>"; };
 		62168C592C9D005100A29FAC /* CookingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CookingView.swift; sourceTree = "<group>"; };
+		621E02B42F7B880D00ABA60E /* MetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricsService.swift; sourceTree = "<group>"; };
+		621E02B62F7B8B0800ABA60E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		623B05E42F381E2C009A713D /* TagSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagSelection.swift; sourceTree = "<group>"; };
 		623BA0892C95063800245AB7 /* UpdateRecipeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateRecipeView.swift; sourceTree = "<group>"; };
 		623C5E182C87D8CB00E43C71 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -122,6 +125,7 @@
 		620B50CD2CC30CB900FAB0D3 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				621E02B42F7B880D00ABA60E /* MetricsService.swift */,
 				62798A652CE40A29007A794E /* RecipesDataService.swift */,
 				620EE5912C9659A8005787AF /* TagsDataService.swift */,
 			);
@@ -184,6 +188,7 @@
 		624D2F2C2C825B5800770C9C /* RecipeManager */ = {
 			isa = PBXGroup;
 			children = (
+				621E02B62F7B8B0800ABA60E /* Info.plist */,
 				624D2F2D2C825B5800770C9C /* RecipeManagerApp.swift */,
 				620B50CD2CC30CB900FAB0D3 /* Utilities */,
 				62B9EF3B2C85453D00D75107 /* Models */,
@@ -410,6 +415,7 @@
 				620EE5922C9659A8005787AF /* TagsDataService.swift in Sources */,
 				62D9A1A02C8913FB006EC572 /* ChallengeProgressView.swift in Sources */,
 				627CBBE52F54D311004489DE /* RecipeDetail.swift in Sources */,
+				621E02B52F7B881800ABA60E /* MetricsService.swift in Sources */,
 				624D2F2E2C825B5800770C9C /* RecipeManagerApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -576,6 +582,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"RecipeManager/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RecipeManager/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RecipeManagerr;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -607,6 +614,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"RecipeManager/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RecipeManager/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RecipeManagerr;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

@@ -83,6 +83,7 @@ class UpdateRecipeViewModel: ObservableObject {
         
         // Ping Flask server here!
         // Metrics.log(event: "recipe_updated", metadata: ["id": recipeId])
+        MetricsService.sendEvent(.recipeCreated)
     }
     
     // adds an empty ingredient

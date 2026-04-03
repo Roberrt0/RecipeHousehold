@@ -17,8 +17,13 @@ class RecipesDataService: ObservableObject {
     
     // 🛠 Logic for the App
     static func upsert(recipe: RecipeModel, context: ModelContext) {
+        print("upserting recipe...")
         context.insert(recipe) // SwiftData handles the "Update or Insert" logic automatically via @Attribute(.unique)
         try? context.save()
+        DispatchQueue.global(qos: .background).async {
+            MetricsService.sendEvent(.recipeCreated)
+        }
+        print("upsert of recipe successful!")
     }
     
     static func delete(at offsets: IndexSet, from recipes: [RecipeModel], in context: ModelContext) {

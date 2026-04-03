@@ -26,10 +26,14 @@ struct MainView: View {
                     Label("profile", systemImage: "person")
                 }
         }
+        .onAppear {
+            //print("DB Path: \(URL.applicationSupportDirectory.path(percentEncoded: false))")
+            MetricsService.sendEvent(.appOpened)
+        }
     }
 }
 
 #Preview {
    MainView()
-        .modelContainer(previewContainer)
+        .modelContainer(previewContainer2)
 }

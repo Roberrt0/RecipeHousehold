@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import SwiftData
 @testable import RecipeManager
 
 final class RecipeManagerTests: XCTestCase {
@@ -32,5 +33,25 @@ final class RecipeManagerTests: XCTestCase {
             // Put the code you want to measure the time of here.
         }
     }
-
+    
+    func testDatabaseStressLoad() throws {
+        // Create a "Clean" In-Memory Container for the testing session
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: RecipeModel.self, TagModel.self, configurations: config)
+        let context = ModelContext(container)
+        
+        
+        // Run this 10 times and measure the time
+        self.measure {
+            // Stress the database with the Service class
+            RecipesDataService.stressTestDatabase(count: 100, context: context, allTags: [])
+        }
+        
+        // Get the # of items generated
+        let descriptor = FetchDescriptor<RecipeModel>()
+        let count = try context.fetchCount(descriptor)
+        
+        // make sure the # of generated items is correct
+        XCTAssertEqual(count, 1000, "Database should contain exactly 1000 items.")
+    }
 }

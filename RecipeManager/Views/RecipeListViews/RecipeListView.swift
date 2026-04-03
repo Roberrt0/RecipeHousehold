@@ -100,7 +100,8 @@ struct RecipeListView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("insert 10000") {
-                        RecipesDataService.stressTestDatabase(count: 10000, context: modelContext, allTags: allTags)
+                        // RecipesDataService.stressTestDatabase(count: 10000, context: modelContext, allTags: allTags)
+                        print("boton presionado.")
                     }
                 }
                 
