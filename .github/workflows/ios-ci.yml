@@ -1,0 +1,32 @@
+name: iOS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest # GitHub provides a Mac runner for us!
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "15.4" # Match this to your local version
+
+      - name: Build for Testing
+        run: |
+          xcodebuild build-for-testing \
+            -scheme YourAppName \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest'
+
+      - name: Run Unit Tests
+        run: |
+          xcodebuild test-without-building \
+            -scheme YourAppName \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest'
