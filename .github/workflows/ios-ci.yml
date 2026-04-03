@@ -17,12 +17,12 @@ jobs:
       - name: Set up Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: "15.4" # Match this to your local version
+          xcode-version: "26.3" # Match this to your local version
 
       - name: Build for Testing
         run: |
           xcodebuild build-for-testing \
-            -scheme YourAppName \
+            -scheme RecipeManager \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest'
 
       - name: Run Unit Tests
