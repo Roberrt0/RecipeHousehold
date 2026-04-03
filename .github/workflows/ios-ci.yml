@@ -28,5 +28,5 @@ jobs:
       - name: Run Unit Tests
         run: |
           xcodebuild test-without-building \
-            -scheme YourAppName \
+            -scheme RecipeManager \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest'
