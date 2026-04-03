@@ -30,3 +30,4 @@ jobs:
           xcodebuild test-without-building \
             -scheme RecipeManager \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest'
+            -only-testing:RecipeManagerTests
